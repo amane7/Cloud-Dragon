@@ -1,0 +1,29 @@
+# deps
+node_modules/
+.pnp
+.pnp.js
+.yarn/install-state.gz
+
+# next
+.next/
+out/
+build/
+
+# logs
+*.log
+.next-trace
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# env
+.env*
+!.env.example
+
+# misc
+.DS_Store
+*.pem
+.vercel
+.turbo
+next-env.d.ts
+.tsbuildinfo
