@@ -1,188 +1,169 @@
+"use client";
+
 import Link from "next/link";
+import { useMemo, useState } from "react";
 import SectionHeader from "@/components/SectionHeader";
+import NetworkGraph from "@/components/network/NetworkGraph";
+import { Reveal, RevealStagger, RevealItem } from "@/components/ui/Reveal";
+import Counter from "@/components/ui/Counter";
 import { people, recommendations } from "@/data/sample";
+import { cn } from "@/lib/cn";
+
+const CONTEXTS = ["All", "Work", "Student", "Creator", "Family", "Community"];
 
 export default function NetworkPage() {
-  const center = { x: 50, y: 50 };
-  const nodes = people.map((p, i) => {
-    const angle = (i / people.length) * Math.PI * 2 - Math.PI / 2;
-    const radius = 30;
-    return {
-      ...p,
-      x: center.x + Math.cos(angle) * radius,
-      y: center.y + Math.sin(angle) * radius,
-    };
-  });
+  const [ctx, setCtx] = useState("All");
+
+  const cities = useMemo(
+    () => Array.from(new Set(people.map((p) => p.city))),
+    []
+  );
+  const avgTrust = useMemo(
+    () => people.reduce((a, b) => a + b.trust, 0) / people.length,
+    []
+  );
 
   return (
     <div className="max-w-7xl mx-auto px-5 lg:px-10 py-20">
-      <SectionHeader
-        eyebrow="NETWORK"
-        title={
-          <>
-            あなたを起点とする<br />
-            <span className="text-gradient-teal">人脈ネットワーク。</span>
-          </>
-        }
-        subtitle="タップで生まれたつながりを、関係の濃さと文脈で可視化します。次に話すといい人もここから見つかる。"
-      />
+      <Reveal>
+        <SectionHeader
+          eyebrow="NETWORK"
+          title={
+            <>
+              あなたを起点とする<br />
+              <span className="text-gradient-teal">人脈ネットワーク。</span>
+            </>
+          }
+          subtitle="タップで生まれたつながりを、関係の濃さと文脈で可視化します。次に話すといい人もここから見つかる。"
+        />
+      </Reveal>
 
       <div className="mt-12 grid lg:grid-cols-12 gap-6">
         {/* Graph */}
-        <div className="lg:col-span-7">
-          <div className="relative rounded-3xl glass p-4 aspect-square">
-            <div className="absolute inset-0 bg-grid opacity-30 rounded-3xl" />
-            <div className="absolute inset-0 bg-radial-teal opacity-60 rounded-3xl" />
-
-            <svg viewBox="0 0 100 100" className="relative w-full h-full">
-              {/* Edges */}
-              {nodes.map((n, i) => (
-                <line
-                  key={`l-${i}`}
-                  x1={center.x}
-                  y1={center.y}
-                  x2={n.x}
-                  y2={n.y}
-                  stroke="rgba(55,231,192,0.3)"
-                  strokeWidth="0.3"
-                  strokeDasharray="1 1"
-                />
-              ))}
-
-              {/* Cross-edges (between some people) */}
-              {[
-                [0, 2],
-                [1, 3],
-                [2, 4],
-                [3, 5],
-                [0, 4],
-              ].map((pair, i) => (
-                <line
-                  key={`c-${i}`}
-                  x1={nodes[pair[0]].x}
-                  y1={nodes[pair[0]].y}
-                  x2={nodes[pair[1]].x}
-                  y2={nodes[pair[1]].y}
-                  stroke="rgba(157,123,255,0.18)"
-                  strokeWidth="0.18"
-                />
-              ))}
-
-              {/* Center self */}
-              <circle cx={center.x} cy={center.y} r="6.5" fill="#0bb38f" opacity="0.18" />
-              <circle cx={center.x} cy={center.y} r="3.6" fill="#37e7c0" />
-              <text
-                x={center.x}
-                y={center.y + 1.2}
-                textAnchor="middle"
-                fontSize="2.5"
-                fill="#050608"
-                fontWeight="700"
-              >
-                YOU
-              </text>
-
-              {/* People nodes */}
-              {nodes.map((n, i) => (
-                <g key={n.id}>
-                  <circle cx={n.x} cy={n.y} r="4.6" fill="#10131a" stroke="rgba(255,255,255,0.35)" strokeWidth="0.3" />
-                  <text
-                    x={n.x}
-                    y={n.y + 0.9}
-                    textAnchor="middle"
-                    fontSize="2.4"
-                    fill="#fff"
-                    fontWeight="700"
-                  >
-                    {n.initials}
-                  </text>
-                  <text
-                    x={n.x}
-                    y={n.y + 8}
-                    textAnchor="middle"
-                    fontSize="2.2"
-                    fill="rgba(255,255,255,0.55)"
-                  >
-                    {n.name}
-                  </text>
-                </g>
-              ))}
-            </svg>
-
-            <div className="absolute top-4 left-4 flex gap-3 text-[10px] font-mono text-white/45">
-              <div className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-teal-300" />
-                直接タップ
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-violet-400" />
-                共通の知人経由
-              </div>
-            </div>
-          </div>
-        </div>
+        <Reveal className="lg:col-span-7" delay={0.1}>
+          <NetworkGraph filter={ctx} />
+        </Reveal>
 
         {/* Sidebar */}
         <div className="lg:col-span-5 space-y-4">
-          <div className="rounded-2xl glass p-5">
-            <div className="text-[10px] font-mono tracking-[0.22em] text-white/45">
-              NEXT CONNECTIONS
+          <Reveal delay={0.05}>
+            <div className="rounded-2xl glass p-5">
+              <div className="text-[10px] font-mono tracking-[0.22em] text-white/45">
+                NETWORK STATS
+              </div>
+              <div className="mt-3 grid grid-cols-3 gap-3">
+                <Stat label="人数" value={people.length} />
+                <Stat
+                  label="平均信用"
+                  value={avgTrust}
+                  decimals={1}
+                />
+                <Stat label="都市" value={cities.length} />
+              </div>
+              <div className="mt-3 text-[11px] text-white/45">
+                {cities.join(" · ")}
+              </div>
             </div>
-            <div className="mt-1 font-display text-lg font-semibold">
-              AIがレコメンド
-            </div>
-            <div className="mt-4 space-y-3">
-              {recommendations.map((r) => {
-                const p = people.find((pp) => pp.id === r.personId)!;
-                return (
-                  <Link
-                    href={`/app/people/${p.id}`}
-                    key={r.personId}
-                    className="block rounded-xl bg-white/[0.04] hover:bg-white/[0.07] transition p-3"
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-violet-400 to-violet-700 grid place-items-center text-ink-950 font-bold text-xs">
-                        {p.initials}
-                      </div>
-                      <div className="flex-1">
-                        <div className="font-semibold text-sm">{p.name}</div>
-                        <div className="text-[11px] text-white/55">
-                          {r.reason}
-                        </div>
-                      </div>
-                      <div className="text-[12px] text-teal-300 font-mono">
-                        {(r.score * 100).toFixed(0)}%
-                      </div>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
+          </Reveal>
 
-          <div className="rounded-2xl glass p-5">
-            <div className="text-[10px] font-mono tracking-[0.22em] text-white/45">
-              CONTEXTS
+          <Reveal delay={0.1}>
+            <div className="rounded-2xl glass p-5">
+              <div className="text-[10px] font-mono tracking-[0.22em] text-white/45">
+                NEXT CONNECTIONS
+              </div>
+              <div className="mt-1 font-display text-lg font-semibold">
+                AIがレコメンド
+              </div>
+              <RevealStagger className="mt-4 space-y-3">
+                {recommendations.map((r) => {
+                  const p = people.find((pp) => pp.id === r.personId)!;
+                  return (
+                    <RevealItem key={r.personId}>
+                      <Link
+                        href={`/app/people/${p.id}`}
+                        className="block rounded-xl bg-white/[0.04] hover:bg-white/[0.08] transition p-3 group"
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-violet-400 to-violet-700 grid place-items-center text-ink-950 font-bold text-xs">
+                            {p.initials}
+                          </div>
+                          <div className="flex-1">
+                            <div className="font-semibold text-sm">
+                              {p.name}
+                            </div>
+                            <div className="text-[11px] text-white/55">
+                              {r.reason}
+                            </div>
+                          </div>
+                          <div className="text-[12px] text-teal-300 font-mono">
+                            {(r.score * 100).toFixed(0)}%
+                          </div>
+                        </div>
+                      </Link>
+                    </RevealItem>
+                  );
+                })}
+              </RevealStagger>
             </div>
-            <div className="mt-1 font-display text-lg font-semibold">
-              文脈フィルタ
+          </Reveal>
+
+          <Reveal delay={0.15}>
+            <div className="rounded-2xl glass p-5">
+              <div className="text-[10px] font-mono tracking-[0.22em] text-white/45">
+                CONTEXTS
+              </div>
+              <div className="mt-1 font-display text-lg font-semibold">
+                文脈フィルタ
+              </div>
+              <div className="mt-4 flex flex-wrap gap-2 text-[12px]">
+                {CONTEXTS.map((t) => (
+                  <button
+                    key={t}
+                    onClick={() => setCtx(t)}
+                    className={cn(
+                      "relative px-3 py-1 rounded-full border transition focus-ring",
+                      ctx === t
+                        ? "border-teal-300 text-teal-100"
+                        : "border-white/10 text-white/65 hover:border-teal-300/40 hover:text-teal-100 hover:bg-teal-300/5"
+                    )}
+                  >
+                    {ctx === t && (
+                      <span className="absolute inset-0 rounded-full bg-teal-300/15" />
+                    )}
+                    <span className="relative">{t}</span>
+                  </button>
+                ))}
+              </div>
+              <p className="mt-4 text-[12px] text-white/50 leading-relaxed">
+                「Work」だけ／「Community」だけといった切り口でネットワークを絞り込めます。
+              </p>
             </div>
-            <div className="mt-4 flex flex-wrap gap-2 text-[12px]">
-              {["Work", "Student", "Creator", "Family", "Community"].map((t) => (
-                <button
-                  key={t}
-                  className="px-3 py-1 rounded-full border border-white/10 text-white/65 hover:border-teal-300 hover:text-teal-100 hover:bg-teal-300/10"
-                >
-                  {t}
-                </button>
-              ))}
-            </div>
-            <p className="mt-4 text-[12px] text-white/50 leading-relaxed">
-              「Work」だけ／「Community」だけといった切り口でネットワークを絞り込めます。
-            </p>
-          </div>
+          </Reveal>
         </div>
       </div>
+    </div>
+  );
+}
+
+function Stat({
+  label,
+  value,
+  decimals = 0,
+}: {
+  label: string;
+  value: number;
+  decimals?: number;
+}) {
+  return (
+    <div className="rounded-lg bg-white/[0.04] p-3 text-center">
+      <div className="text-[10px] font-mono text-white/40 tracking-[0.18em]">
+        {label}
+      </div>
+      <Counter
+        value={value}
+        decimals={decimals}
+        className="mt-1 block font-display text-xl font-bold text-gradient-teal"
+      />
     </div>
   );
 }
